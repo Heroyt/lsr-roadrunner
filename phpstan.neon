@@ -1,0 +1,14 @@
+parameters:
+	dynamicConstantNames:
+		- LANGUAGE_DIR
+		- LANGUAGE_FILE_NAME
+		- DEFAULT_LANGUAGE
+		- ROOT
+	editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
+	level: max
+	paths:
+		- src
+		- config
+		- tests/bootstrap.php
+		- tests/TestCases
+	tmpDir: temp

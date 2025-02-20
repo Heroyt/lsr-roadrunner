@@ -1,0 +1,79 @@
+{
+  "name": "lsr/roadrunner",
+  "description": "Laser framework roadrunner connection.",
+  "version": "0.1.0",
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packages.laserliga.cz"
+    }
+  ],
+  "scripts": {
+    "test": "./vendor/bin/phpunit",
+    "docs": "doxygen",
+    "phpstan": "./vendor/bin/phpstan"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest",
+    "phpunit/phpunit": "^11",
+    "phpstan/phpstan": "^2.0",
+    "phpstan/extension-installer": "^1.2",
+    "phpstan/phpstan-dibi": "^2.0",
+    "phpstan/phpstan-nette": "^2.0",
+    "squizlabs/php_codesniffer": "^3.11"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lsr\\Roadrunner\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "TestCases\\": "tests/TestCases/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Tomáš Vojík",
+      "email": "vojik@wboy.cz"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=8.4",
+    "lsr/core": "^0.3",
+    "lsr/interfaces": "^0.3.5",
+    "lsr/logging": "^0.3",
+    "ext-fileinfo": "*",
+    "ext-gettext": "*",
+    "ext-simplexml": "*",
+    "ext-ctype": "*",
+    "ext-mbstring": "*",
+    "ext-pdo_sqlite": "*",
+    "latte/latte": "^3.0",
+    "nette/di": "^3.2",
+    "lsr/routing": "^0.3",
+    "lsr/request": "^0.3",
+    "lsr/db": "^0.3",
+    "lsr/serializer": "^0.3",
+    "lsr/cache": "^0.3",
+    "lsr/orm": "^0.3",
+    "vlucas/phpdotenv": "^5.6",
+    "nette/php-generator": "^4.1",
+    "spiral/roadrunner": "^2024.3",
+    "spiral/roadrunner-worker": "^3.6",
+    "spiral/roadrunner-http": "^3.5",
+    "spiral/roadrunner-jobs": "^4.6"
+  },
+  "config": {
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "v0.2": "0.2.x-dev",
+      "v0.3": "0.3.x-dev"
+    }
+  }
+}
