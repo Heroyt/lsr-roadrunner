@@ -21,9 +21,14 @@ use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\Environment;
 use Spiral\RoadRunner\Jobs\Jobs;
 use Spiral\RoadRunner\Jobs\Queue;
+use stdClass;
 
 /**
- * @property-read array{workers: array<string,Worker|string>, rpc: array{host: string, port: int}, jobs: array{queue: string, serializer: TaskSerializerInterface|string}} $config
+ * @property-read object{
+ *     workers: array<string,Worker|string>,
+ *     rpc: object{host: string, port: int},
+ *     jobs: object{queue: string, serializer: TaskSerializerInterface|string}
+ *  }&stdClass $config
  */
 class RoadrunnerExtension extends CompilerExtension
 {
@@ -95,7 +100,7 @@ class RoadrunnerExtension extends CompilerExtension
                 ->setFactory(
                   Server::class,
                   [
-                    $this->config['workers'],
+                    $this->config->workers,
                   ]
                 )
                 ->setTags(['lsr', 'roadrunner']);
@@ -105,14 +110,14 @@ class RoadrunnerExtension extends CompilerExtension
                 ->setType(RPC::class)
                 ->setFactory(
                   [RPC::class, 'create']
-                  [$this->config['rpc']['host'].':'.$this->config['rpc']['port']]
+                  [$this->config->rpc->host.':'.$this->config->rpc->port]
                 )
                 ->setTags(['lsr', 'roadrunner', 'rpc']);
         $builder->addDefinition($this->prefix('asyncRpc'))
                 ->setType(MultiRPC::class)
                 ->setFactory(
                   [MultiRPC::class, 'create']
-                  [$this->config['rpc']['host'].':'.$this->config['rpc']['port']]
+                  [$this->config->rpc->host.':'.$this->config->rpc->port]
                 )
                 ->setTags(['lsr', 'roadrunner']);
 
@@ -131,7 +136,7 @@ class RoadrunnerExtension extends CompilerExtension
                 ->setFactory(
                   ['@'.$this->prefix('jobs'), 'connect'],
                   [
-                    $this->config['jobs']['queue'],
+                    $this->config->jobs->queue,
                   ]
                 )
                 ->setTags(['lsr', 'roadrunner', 'jobs']);
@@ -145,7 +150,7 @@ class RoadrunnerExtension extends CompilerExtension
                   TaskProducer::class,
                   [
                     '@'.$this->prefix('queue'),
-                    $this->config['jobs']['serializer'],
+                    $this->config->jobs->serializer,
                   ]
                 )
                 ->setTags(['lsr', 'roadrunner', 'jobs']);
