@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Lsr\Roadrunner\Tasks;
 
+use Lsr\Roadrunner\Tasks\Serializers\TaskSerializerInterface;
 use Spiral\RoadRunner\Jobs\Exception\JobsException;
 use Spiral\RoadRunner\Jobs\OptionsInterface;
 use Spiral\RoadRunner\Jobs\Queue;

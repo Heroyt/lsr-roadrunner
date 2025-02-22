@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Lsr\Roadrunner\Tasks;
+namespace Lsr\Roadrunner\Tasks\Serializers;
 
+use Lsr\Roadrunner\Tasks\TaskPayloadDto;
+use Lsr\Roadrunner\Tasks\TaskPayloadInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;

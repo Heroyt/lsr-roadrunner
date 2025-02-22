@@ -7,9 +7,9 @@ use Lsr\Roadrunner\ErrorHandlers\Http403ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http404ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http500ErrorHandler;
 use Lsr\Roadrunner\Server;
-use Lsr\Roadrunner\Tasks\PhpTaskSerializer;
+use Lsr\Roadrunner\Tasks\Serializers\PhpTaskSerializer;
+use Lsr\Roadrunner\Tasks\Serializers\TaskSerializerInterface;
 use Lsr\Roadrunner\Tasks\TaskProducer;
-use Lsr\Roadrunner\Tasks\TaskSerializerInterface;
 use Lsr\Roadrunner\Workers\HttpWorker;
 use Lsr\Roadrunner\Workers\JobsWorker;
 use Lsr\Roadrunner\Workers\Worker;
@@ -23,8 +23,7 @@ use Spiral\RoadRunner\Jobs\Jobs;
 use Spiral\RoadRunner\Jobs\Queue;
 
 /**
- * @property-read array{workers: array<string,Worker|string>, rpc: array{host: string, port: int}, jobs: array{queue:
- *   string, serializer: TaskSerializerInterface|string}} $config
+ * @property-read array{workers: array<string,Worker|string>, rpc: array{host: string, port: int}, jobs: array{queue: string, serializer: TaskSerializerInterface|string}} $config
  */
 class RoadrunnerExtension extends CompilerExtension
 {

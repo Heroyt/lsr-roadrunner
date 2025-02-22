@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Lsr\Roadrunner\Tasks;
+namespace Lsr\Roadrunner\Tasks\Serializers;
+
+use Lsr\Roadrunner\Tasks\TaskPayloadInterface;
 
 readonly class PhpTaskSerializer implements TaskSerializerInterface
 {

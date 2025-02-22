@@ -1,7 +1,7 @@
 {
   "name": "lsr/roadrunner",
   "description": "Laser framework roadrunner connection.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repositories": [
     {
       "type": "composer",
