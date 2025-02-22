@@ -106,18 +106,19 @@ class RoadrunnerExtension extends CompilerExtension
                 ->setTags(['lsr', 'roadrunner']);
 
         // RPC
+        $rpcConnection = $this->config->rpc->host.':'.$this->config->rpc->port;
         $builder->addDefinition($this->prefix('rpc'))
                 ->setType(RPC::class)
                 ->setFactory(
-                  [RPC::class, 'create']
-                  [$this->config->rpc->host.':'.$this->config->rpc->port]
+                  [RPC::class, 'create'],
+                  [$rpcConnection],
                 )
                 ->setTags(['lsr', 'roadrunner', 'rpc']);
         $builder->addDefinition($this->prefix('asyncRpc'))
                 ->setType(MultiRPC::class)
                 ->setFactory(
-                  [MultiRPC::class, 'create']
-                  [$this->config->rpc->host.':'.$this->config->rpc->port]
+                  [MultiRPC::class, 'create'],
+                  [$rpcConnection],
                 )
                 ->setTags(['lsr', 'roadrunner']);
 
