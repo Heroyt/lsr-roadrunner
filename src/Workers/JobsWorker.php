@@ -7,6 +7,7 @@ use Lsr\Core\App;
 use Lsr\Logging\Logger;
 use Lsr\Orm\ModelRepository;
 use Lsr\Roadrunner\Tasks\TaskDispatcherInterface;
+use Lsr\Roadrunner\Tasks\TaskSerializerInterface;
 use Spiral\RoadRunner\Jobs\Consumer;
 use Spiral\RoadRunner\Jobs\Task\ReceivedTaskInterface;
 use Throwable;
@@ -25,19 +26,23 @@ class JobsWorker implements Worker
         }
         set(App $value) => $this->app = $value;
     }
+    /** @phpstan-ignore property.onlyRead */
     private Logger $logger {
         get {
             if (!isset($this->logger)) {
-                $this->logger = new Logger(LOG_DIR, 'worker');
+                $this->logger = new Logger(LOG_DIR, 'worker-jobs');
             }
             return $this->logger;
         }
         set(Logger $value) => $this->logger = $value;
     }
 
+    public function __construct(
+      protected readonly TaskSerializerInterface $serializer,
+    ) {}
+
     public function run() : void {
         $consumer = new Consumer();
-        /** @var ReceivedTaskInterface $task */
         while ($task = $consumer->waitTask()) {
             $this->handleTask($task);
         }
@@ -56,7 +61,11 @@ class JobsWorker implements Worker
                 throw new \RuntimeException('Cannot find dispatcher for task "'.$name.'"');
             }
 
-            $dispatcher->process($task);
+            // Parse payload
+            $rawPayload = $task->getPayload();
+            $payload = $rawPayload !== '' ? $this->serializer->unserialize($rawPayload) : null;
+
+            $dispatcher->process($task, $payload);
 
             if (!$task->isCompleted()) {
                 $task->ack();

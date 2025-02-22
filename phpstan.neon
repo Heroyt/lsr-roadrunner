@@ -8,7 +8,5 @@ parameters:
 	level: max
 	paths:
 		- src
-		- config
-		- tests/bootstrap.php
-		- tests/TestCases
+		- tests
 	tmpDir: temp

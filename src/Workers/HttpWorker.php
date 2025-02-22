@@ -33,6 +33,7 @@ class HttpWorker implements Worker
         }
         set(App $value) => $this->app = $value;
     }
+    /** @phpstan-ignore property.onlyRead */
     private Logger $logger {
         get {
             if (!isset($this->logger)) {
