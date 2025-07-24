@@ -7,8 +7,8 @@ use LogicException;
 use Lsr\Core\App;
 use Lsr\Core\Requests\Exceptions\RouteNotFoundException;
 use Lsr\Core\Requests\Request;
-use Lsr\Core\Requests\RequestFactory;
 use Lsr\Core\Routing\Exceptions\AccessDeniedException;
+use Lsr\Interfaces\RequestFactoryInterface;
 use Lsr\Interfaces\RequestInterface;
 use Lsr\Logging\Logger;
 use Lsr\Orm\ModelRepository;
@@ -46,10 +46,10 @@ class HttpWorker implements Worker
     private RrWorker $worker;
     private PSR7Worker $psr7;
 
-    private RequestFactory $requestFactory {
+    private RequestFactoryInterface $requestFactory {
         get {
             if (!isset($this->requestFactory)) {
-                $service = $this->app::getServiceByType(RequestFactory::class);
+                $service = $this->app::getServiceByType(RequestFactoryInterface::class);
                 if ($service === null) {
                     throw new LogicException(
                       'RequestFactory service is not set. Please ensure it is registered in the application.'
@@ -59,7 +59,7 @@ class HttpWorker implements Worker
             }
             return $this->requestFactory;
         }
-        set(RequestFactory $value) => $this->requestFactory = $value;
+        set(RequestFactoryInterface $value) => $this->requestFactory = $value;
     }
 
     public function __construct(
