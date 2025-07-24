@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Lsr\Roadrunner\Workers;
 
+use LogicException;
 use Lsr\Core\App;
 use Lsr\Core\Requests\Exceptions\RouteNotFoundException;
 use Lsr\Core\Requests\Request;
@@ -33,7 +34,6 @@ class HttpWorker implements Worker
         }
         set(App $value) => $this->app = $value;
     }
-    /** @phpstan-ignore property.onlyRead */
     private Logger $logger {
         get {
             if (!isset($this->logger)) {
@@ -45,6 +45,22 @@ class HttpWorker implements Worker
     }
     private RrWorker $worker;
     private PSR7Worker $psr7;
+
+    private RequestFactory $requestFactory {
+        get {
+            if (!isset($this->requestFactory)) {
+                $service = $this->app::getServiceByType(RequestFactory::class);
+                if ($service === null) {
+                    throw new LogicException(
+                      'RequestFactory service is not set. Please ensure it is registered in the application.'
+                    );
+                }
+                $this->requestFactory = $service;
+            }
+            return $this->requestFactory;
+        }
+        set(RequestFactory $value) => $this->requestFactory = $value;
+    }
 
     public function __construct(
       private readonly HttpErrorHandler $error500Handler,
@@ -70,7 +86,7 @@ class HttpWorker implements Worker
                     if ($request === null) {
                         break;
                     }
-                    $request = RequestFactory::fromPsrRequest($request);
+                    $request = $this->requestFactory->fromPsrRequest($request);
                 } catch (Throwable $e) {
                     // Although the PSR-17 specification clearly states that there can be
                     // no exceptions when creating a request, however, some implementations

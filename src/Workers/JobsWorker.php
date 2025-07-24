@@ -8,6 +8,7 @@ use Lsr\Logging\Logger;
 use Lsr\Orm\ModelRepository;
 use Lsr\Roadrunner\Tasks\Serializers\TaskSerializerInterface;
 use Lsr\Roadrunner\Tasks\TaskDispatcherInterface;
+use RuntimeException;
 use Spiral\RoadRunner\Jobs\Consumer;
 use Spiral\RoadRunner\Jobs\Task\ReceivedTaskInterface;
 use Throwable;
@@ -26,7 +27,6 @@ class JobsWorker implements Worker
         }
         set(App $value) => $this->app = $value;
     }
-    /** @phpstan-ignore property.onlyRead */
     private Logger $logger {
         get {
             if (!isset($this->logger)) {
@@ -58,7 +58,7 @@ class JobsWorker implements Worker
             $dispatcher = $this->app::getService($name);
             if (!($dispatcher instanceof TaskDispatcherInterface)) {
                 $task->nack('Cannot find dispatcher for task "'.$name.'"');
-                throw new \RuntimeException('Cannot find dispatcher for task "'.$name.'"');
+                throw new RuntimeException('Cannot find dispatcher for task "'.$name.'"');
             }
 
             // Parse payload
@@ -78,7 +78,7 @@ class JobsWorker implements Worker
         $this->app->translations->updateTranslations();
     }
 
-    public function handleError(\Throwable $error) : void {
+    public function handleError(Throwable $error) : void {
         $this->logger->exception($error);
         Helpers::improveException($error);
         Debugger::log($error, ILogger::EXCEPTION);
