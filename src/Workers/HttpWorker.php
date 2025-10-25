@@ -97,6 +97,15 @@ class HttpWorker implements Worker
                     $this->psr7->respond(new Response(400, body: $e->getMessage()));
                     continue;
                 }
+
+                if (!($request instanceof RequestInterface)) {
+                    throw new LogicException(
+                      'Roadrunner HTTP worker requires a RequestInterface instance from RequestFactory, '.get_class(
+                        $request
+                      ).' given.'
+                    );
+                }
+
                 $this->handleRequest($request);
             } catch (Throwable $e) {
                 $this->handleError($e);
