@@ -1,7 +1,7 @@
 {
   "name": "lsr/roadrunner",
   "description": "Laser framework roadrunner connection.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "repositories": [
     {
       "type": "composer",
@@ -15,7 +15,7 @@
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
-    "phpunit/phpunit": "^12",
+    "phpunit/phpunit": "^13",
     "phpstan/phpstan": "^2.0",
     "phpstan/extension-installer": "^1.2",
     "phpstan/phpstan-dibi": "^2.0",
@@ -62,7 +62,7 @@
     "nette/php-generator": "^4.1",
     "spiral/roadrunner": "^2025",
     "spiral/roadrunner-worker": "^3.6",
-    "spiral/roadrunner-http": "^3.5",
+    "spiral/roadrunner-http": "^4.1",
     "spiral/roadrunner-jobs": "^4.6"
   },
   "config": {
