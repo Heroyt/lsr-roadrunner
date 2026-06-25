@@ -15,11 +15,14 @@ trait BaseHttpErrorHandler
     protected function getAcceptTypes(Request $request) : array {
         $types = [];
         foreach ($request->getHeader('Accept') as $value) {
-            $str = strtolower(trim(explode(';', $value, 2)[0]));
-            if ($str === '') {
-                continue;
+            $values = explode(',', $value);
+            foreach ($values as $v) {
+                $str = strtolower(trim(explode(';', $v, 2)[0]));
+                if ($str === '') {
+                    continue;
+                }
+                $types[] = $str;
             }
-            $types[] = $str;
         }
         return $types;
     }
