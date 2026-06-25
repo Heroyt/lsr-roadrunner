@@ -8,6 +8,7 @@ use Lsr\Core\App;
 use Lsr\Core\Requests\Exceptions\RouteNotFoundException;
 use Lsr\Core\Requests\Request;
 use Lsr\Core\Routing\Exceptions\AccessDeniedException;
+use Lsr\Core\Routing\Exceptions\MethodNotAllowedException;
 use Lsr\Exceptions\DispatchBreakException;
 use Lsr\Interfaces\RequestFactoryInterface;
 use Lsr\Interfaces\RequestInterface;
@@ -65,8 +66,9 @@ class HttpWorker implements Worker
 
     public function __construct(
         private readonly HttpErrorHandler $error500Handler,
-        private readonly HttpErrorHandler $error404Handler,
         private readonly HttpErrorHandler $error403Handler,
+        private readonly HttpErrorHandler $error404Handler,
+        private readonly HttpErrorHandler $error405Handler,
     )
     {
         $this->worker = RrWorker::create();
@@ -152,10 +154,6 @@ class HttpWorker implements Worker
 
     public function handleError(Throwable $error): void
     {
-        $this->logger->exception($error);
-        Helpers::improveException($error);
-        Debugger::log($error, ILogger::EXCEPTION);
-
         $request = $this->app->getRequest();
         assert($request instanceof Request);
 
@@ -167,6 +165,14 @@ class HttpWorker implements Worker
             $this->psr7->respond($this->error403Handler->showError($request, $error));
             return;
         }
+        if ($error instanceof MethodNotAllowedException) {
+            $this->psr7->respond($this->error405Handler->showError($request, $error));
+            return;
+        }
+
+        $this->logger->exception($error);
+        Helpers::improveException($error);
+        Debugger::log($error, ILogger::EXCEPTION);
 
         file_put_contents('php://stderr', (string)$error);
 

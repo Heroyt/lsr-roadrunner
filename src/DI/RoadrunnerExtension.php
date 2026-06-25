@@ -5,6 +5,7 @@ namespace Lsr\Roadrunner\DI;
 
 use Lsr\Roadrunner\ErrorHandlers\Http403ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http404ErrorHandler;
+use Lsr\Roadrunner\ErrorHandlers\Http405ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http500ErrorHandler;
 use Lsr\Roadrunner\Server;
 use Lsr\Roadrunner\Tasks\Serializers\PhpTaskSerializer;
@@ -73,6 +74,9 @@ class RoadrunnerExtension extends CompilerExtension
         $builder->addDefinition($this->prefix('httpErrorHandler.404'))
                 ->setType(Http404ErrorHandler::class)
                 ->setTags(['lsr', 'roadrunner', 'http']);
+        $builder->addDefinition($this->prefix('httpErrorHandler.405'))
+                ->setType(Http405ErrorHandler::class)
+                ->setTags(['lsr', 'roadrunner', 'http']);
         $builder->addDefinition($this->prefix('httpErrorHandler.403'))
                 ->setType(Http403ErrorHandler::class)
                 ->setTags(['lsr', 'roadrunner', 'http']);
@@ -84,8 +88,9 @@ class RoadrunnerExtension extends CompilerExtension
                   HttpWorker::class,
                   [
                     '@'.$this->prefix('httpErrorHandler.500'),
-                    '@'.$this->prefix('httpErrorHandler.404'),
                     '@'.$this->prefix('httpErrorHandler.403'),
+                    '@'.$this->prefix('httpErrorHandler.404'),
+                    '@'.$this->prefix('httpErrorHandler.405'),
                   ]
                 )
                 ->setTags(['lsr', 'roadrunner', 'http']);
