@@ -70,16 +70,16 @@ class RoadrunnerExtension extends CompilerExtension
         // Http error handlers
         $builder->addDefinition($this->prefix('httpErrorHandler.500'))
                 ->setType(Http500ErrorHandler::class)
-                ->setTags(['lsr', 'roadrunner', 'http']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.404'))
                 ->setType(Http404ErrorHandler::class)
-                ->setTags(['lsr', 'roadrunner', 'http']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.405'))
                 ->setType(Http405ErrorHandler::class)
-                ->setTags(['lsr', 'roadrunner', 'http']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.403'))
                 ->setType(Http403ErrorHandler::class)
-                ->setTags(['lsr', 'roadrunner', 'http']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
 
         // Workers
         $builder->addDefinition($this->prefix('worker.http'))
@@ -93,10 +93,10 @@ class RoadrunnerExtension extends CompilerExtension
                     '@'.$this->prefix('httpErrorHandler.405'),
                   ]
                 )
-                ->setTags(['lsr', 'roadrunner', 'http']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('worker.jobs'))
                 ->setType(JobsWorker::class)
-                ->setTags(['lsr', 'roadrunner', 'jobs']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
 
 
         // Main server
@@ -108,7 +108,7 @@ class RoadrunnerExtension extends CompilerExtension
                     $this->config->workers,
                   ]
                 )
-                ->setTags(['lsr', 'roadrunner']);
+                ->setTags(['lsr' => true, 'roadrunner' => true]);
 
         // RPC
         $rpcConnection = $this->config->rpc->host.':'.$this->config->rpc->port;
@@ -118,14 +118,14 @@ class RoadrunnerExtension extends CompilerExtension
                   [RPC::class, 'create'],
                   [$rpcConnection],
                 )
-                ->setTags(['lsr', 'roadrunner', 'rpc']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'rpc' => true]);
         $builder->addDefinition($this->prefix('asyncRpc'))
                 ->setType(MultiRPC::class)
                 ->setFactory(
                   [MultiRPC::class, 'create'],
                   [$rpcConnection],
                 )
-                ->setTags(['lsr', 'roadrunner']);
+                ->setTags(['lsr' => true, 'roadrunner' => true]);
 
         // Jobs
         $builder->addDefinition($this->prefix('jobs'))
@@ -136,7 +136,7 @@ class RoadrunnerExtension extends CompilerExtension
                     '@'.$this->prefix('rpc'),
                   ]
                 )
-                ->setTags(['lsr', 'roadrunner', 'jobs']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('queue'))
                 ->setType(Queue::class)
                 ->setFactory(
@@ -145,11 +145,11 @@ class RoadrunnerExtension extends CompilerExtension
                     $this->config->jobs->queue,
                   ]
                 )
-                ->setTags(['lsr', 'roadrunner', 'jobs']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('tasks.serializer'))
                 ->setType(TaskSerializerInterface::class)
                 ->setFactory(PhpTaskSerializer::class)
-                ->setTags(['lsr', 'roadrunner', 'jobs']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('tasks.producer'))
                 ->setType(TaskProducer::class)
                 ->setFactory(
@@ -159,7 +159,7 @@ class RoadrunnerExtension extends CompilerExtension
                     $this->config->jobs->serializer,
                   ]
                 )
-                ->setTags(['lsr', 'roadrunner', 'jobs']);
+                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
     }
 
 }
