@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\Workers;
 
 use LogicException;
 use Lsr\Core\App;
+use Lsr\Core\Http\Lifecycle\RequestLifecycleHookInterface;
+use Lsr\Core\Http\Lifecycle\RequestLifecycleScopeInterface;
 use Lsr\Core\Requests\Exceptions\RouteNotFoundException;
 use Lsr\Core\Requests\Request;
 use Lsr\Core\Routing\Exceptions\AccessDeniedException;
@@ -15,6 +18,7 @@ use Lsr\Interfaces\RequestInterface;
 use Lsr\Logging\Logger;
 use Lsr\Orm\ModelRepository;
 use Lsr\Roadrunner\ErrorHandlers\HttpErrorHandler;
+use Lsr\Roadrunner\Lifecycle\WorkerLifecycleHookInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Spiral\RoadRunner\Http\PSR7Worker;
@@ -26,7 +30,6 @@ use Tracy\ILogger;
 
 class HttpWorker implements Worker
 {
-
     public App $app {
         get {
             if (!isset($this->app)) {
@@ -36,6 +39,7 @@ class HttpWorker implements Worker
         }
         set(App $value) => $this->app = $value;
     }
+
     private Logger $logger {
         get {
             if (!isset($this->logger)) {
@@ -47,6 +51,9 @@ class HttpWorker implements Worker
     }
     private RrWorker $worker;
     private PSR7Worker $psr7;
+    private ?RequestLifecycleHookInterface $requestLifecycleHook = null;
+    private ?WorkerLifecycleHookInterface $workerLifecycleHook = null;
+    private ?\Psr\Http\Message\ResponseInterface $response = null;
 
     private RequestFactoryInterface $requestFactory {
         get {
@@ -69,57 +76,83 @@ class HttpWorker implements Worker
         private readonly HttpErrorHandler $error403Handler,
         private readonly HttpErrorHandler $error404Handler,
         private readonly HttpErrorHandler $error405Handler,
-    )
-    {
+    ) {
         $this->worker = RrWorker::create();
 
         $factory = new Psr17Factory();
         $this->psr7 = new PSR7Worker($this->worker, $factory, $factory, $factory);
     }
 
+    public function setRequestLifecycleHook(RequestLifecycleHookInterface $hook): static
+    {
+        $this->requestLifecycleHook = $hook;
+        return $this;
+    }
+
+    public function setWorkerLifecycleHook(WorkerLifecycleHookInterface $hook): static
+    {
+        $this->workerLifecycleHook = $hook;
+        return $this;
+    }
+
     public function run(): void
     {
         $request = null;
-        while (true) {
-            if (isset($request)) {
-                unset($request);
-            }
 
-            try {
+        try {
+            while (true) {
+                $this->response = null;
+                $iterationStarted = false;
+                if (isset($request)) {
+                    unset($request);
+                }
+
                 try {
-                    $request = $this->psr7->waitRequest();
-                    if ($request === null) {
-                        break;
+                    try {
+                        $request = $this->psr7->waitRequest();
+                        if ($request === null) {
+                            break;
+                        }
+                        $iterationStarted = true;
+                        $request = $this->requestFactory->fromPsrRequest($request);
+                    } catch (Throwable $e) {
+                        // Although the PSR-17 specification clearly states that there can be
+                        // no exceptions when creating a request, however, some implementations
+                        // may violate this rule. Therefore, it is recommended to process the
+                        // incoming request for errors.
+                        //
+                        // Send "Bad Request" response.
+                        $this->respond(new Response(400, body: $e->getMessage()));
+                        continue;
                     }
-                    $request = $this->requestFactory->fromPsrRequest($request);
+
+                    if (!($request instanceof RequestInterface)) {
+                        throw new LogicException(
+                            'Roadrunner HTTP worker requires a RequestInterface instance from RequestFactory, '
+                            . get_class($request) . ' given.'
+                        );
+                    }
+
+                    $this->handleRequest($request);
                 } catch (Throwable $e) {
-                    // Although the PSR-17 specification clearly states that there can be
-                    // no exceptions when creating a request, however, some implementations
-                    // may violate this rule. Therefore, it is recommended to process the
-                    // incoming request for errors.
-                    //
-                    // Send "Bad Request" response.
-                    $this->psr7->respond(new Response(400, body: $e->getMessage()));
-                    continue;
+                    $this->handleError($e);
+                } finally {
+                    if ($iterationStarted) {
+                        $this->afterIteration();
+                    }
                 }
-
-                if (!($request instanceof RequestInterface)) {
-                    throw new LogicException(
-                        'Roadrunner HTTP worker requires a RequestInterface instance from RequestFactory, ' . get_class(
-                            $request
-                        ) . ' given.'
-                    );
-                }
-
-                $this->handleRequest($request);
-            } catch (Throwable $e) {
-                $this->handleError($e);
             }
+        } finally {
+            $this->workerStopped();
         }
     }
 
     public function handleRequest(RequestInterface $request): void
     {
+        $this->response = null;
+        $scope = $this->beginLifecycle($request);
+        $failure = null;
+
         // Clear static cache
         ModelRepository::clearInstances();
 
@@ -133,23 +166,94 @@ class HttpWorker implements Worker
                 $session->init();
             }
 
-            $this->psr7->respond(
+            $this->respond(
                 $this->app->run()
                     ->withAddedHeader('Content-Language', $this->app->translations->getLang())
                     ->withAddedHeader('Set-Cookie', $session->getCookieHeader())
             );
         } catch (DispatchBreakException $e) {
-            // Dispatch break exception is a special case allowing to create "throw" a response from anywhere in the request handling
-            $this->psr7->respond(
+            // Dispatch break exception is a special case allowing to create a response from anywhere.
+            $this->respond(
                 $e->getResponse()
                     ->withAddedHeader('Set-Cookie', $session->getCookieHeader())
             );
         } catch (Throwable $e) {
-            $this->handleError($e);
+            $this->recordLifecycleException($scope, $e);
+            try {
+                $this->handleError($e);
+            } catch (Throwable $handlerException) {
+                $this->recordLifecycleException($scope, $handlerException);
+                $failure = $handlerException;
+            }
         } finally {
-            $session->close();
-            $this->app->translations->updateTranslations();
+            try {
+                $session->close();
+            } catch (Throwable $exception) {
+                $this->recordLifecycleException($scope, $exception);
+                $this->reportAfterResponseError($exception);
+            }
+
+            try {
+                $this->app->translations->updateTranslations();
+            } catch (Throwable $exception) {
+                $this->recordLifecycleException($scope, $exception);
+                $this->reportAfterResponseError($exception);
+            }
+
+            try {
+                $scope?->complete($this->response);
+            } catch (Throwable) {
+                // Lifecycle hooks must never affect request handling.
+            }
         }
+
+        if ($failure !== null) {
+            throw $failure;
+        }
+    }
+
+    private function beginLifecycle(RequestInterface $request): ?RequestLifecycleScopeInterface
+    {
+        try {
+            return $this->requestLifecycleHook?->begin($request);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function recordLifecycleException(
+        ?RequestLifecycleScopeInterface $scope,
+        Throwable $exception
+    ): void {
+        try {
+            $scope?->recordException($exception);
+        } catch (Throwable) {
+            // Lifecycle hooks must never affect request handling.
+        }
+    }
+
+    private function afterIteration(): void
+    {
+        try {
+            $this->workerLifecycleHook?->afterIteration();
+        } catch (Throwable) {
+            // Lifecycle hooks must never affect worker execution.
+        }
+    }
+
+    private function workerStopped(): void
+    {
+        try {
+            $this->workerLifecycleHook?->workerStopped();
+        } catch (Throwable) {
+            // Lifecycle hooks must never affect worker execution.
+        }
+    }
+
+    private function respond(\Psr\Http\Message\ResponseInterface $response): void
+    {
+        $this->psr7->respond($response);
+        $this->response = $response;
     }
 
     public function handleError(Throwable $error): void
@@ -158,23 +262,19 @@ class HttpWorker implements Worker
         assert($request instanceof Request);
 
         if ($error instanceof RouteNotFoundException) {
-            $this->psr7->respond($this->error404Handler->showError($request, $error));
+            $this->respond($this->error404Handler->showError($request, $error));
             return;
         }
         if ($error instanceof AccessDeniedException) {
-            $this->psr7->respond($this->error403Handler->showError($request, $error));
+            $this->respond($this->error403Handler->showError($request, $error));
             return;
         }
         if ($error instanceof MethodNotAllowedException) {
-            $this->psr7->respond($this->error405Handler->showError($request, $error));
+            $this->respond($this->error405Handler->showError($request, $error));
             return;
         }
 
-        $this->logger->exception($error);
-        Helpers::improveException($error);
-        Debugger::log($error, ILogger::EXCEPTION);
-
-        file_put_contents('php://stderr', (string)$error);
+        $this->reportError($error);
 
         if (!$this->app->isProduction()) {
             ob_start(); // double buffer prevents sending HTTP headers in some PHP
@@ -184,7 +284,7 @@ class HttpWorker implements Worker
             $blueScreen = ob_get_clean();
             ob_end_clean();
 
-            $this->psr7->respond(
+            $this->respond(
                 new Response(
                     500,
                     [
@@ -196,6 +296,22 @@ class HttpWorker implements Worker
             return;
         }
 
-        $this->psr7->respond($this->error500Handler->showError($request, $error));
+        $this->respond($this->error500Handler->showError($request, $error));
+    }
+    private function reportError(Throwable $error): void
+    {
+        $this->logger->exception($error);
+        Helpers::improveException($error);
+        Debugger::log($error, ILogger::EXCEPTION);
+        file_put_contents('php://stderr', (string) $error);
+    }
+
+    private function reportAfterResponseError(Throwable $error): void
+    {
+        try {
+            $this->reportError($error);
+        } catch (Throwable) {
+            // Error reporting must not cause a second response after the request completed.
+        }
     }
 }
