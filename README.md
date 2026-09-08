@@ -5,7 +5,7 @@
 ## Requirements
 
 - PHP `>=8.4` with `fileinfo`, `gettext`, `simplexml`, `ctype`, `mbstring` and `pdo_sqlite`.
-- LSR Core and Routing `^0.3 || ^0.4`, Interfaces `^0.3.5`, and the Logging, Request, DB, Serializer, Cache and ORM `^0.3` packages.
+- LSR Core and Routing `^0.3 || ^0.4 || ^0.5`, Interfaces `^0.3.5`, and the Logging, Request, DB, Serializer, Cache and ORM `^0.3` packages.
 - Nette DI `^3.2`, Latte `^3.0`, Nette PHP Generator `^4.1` and phpdotenv `^5.6`.
 - RoadRunner `^2025`, worker `^3.6`, HTTP `^4.1` and jobs `^4.6` PHP packages.
 - A running RoadRunner server with the appropriate plugins, RPC endpoint and job pipeline configured outside this library. The application must bootstrap LSR Core, including its services, runtime paths, session and translations.
