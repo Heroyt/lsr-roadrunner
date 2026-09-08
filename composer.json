@@ -12,7 +12,10 @@
   "scripts": {
     "test": "./vendor/bin/phpunit",
     "docs": "doxygen",
-    "phpstan": "./vendor/bin/phpstan"
+    "phpstan": "./vendor/bin/phpstan",
+    "cs:fix": "./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php",
+    "cbf": "@cs:fix",
+    "cs": "./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
@@ -21,7 +24,7 @@
     "phpstan/extension-installer": "^1.2",
     "phpstan/phpstan-dibi": "^2.0",
     "phpstan/phpstan-nette": "^2.0",
-    "squizlabs/php_codesniffer": "^4.0"
+    "friendsofphp/php-cs-fixer": "^3.95"
   },
   "autoload": {
     "psr-4": {
