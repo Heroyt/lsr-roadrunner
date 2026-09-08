@@ -24,7 +24,7 @@ class JobsWorker implements Worker
 {
     public App $app {
         get {
-            if (!isset($this->app)) {
+            if ( ! isset($this->app)) {
                 $this->app = App::getInstance();
             }
             return $this->app;
@@ -34,7 +34,7 @@ class JobsWorker implements Worker
 
     private Logger $logger {
         get {
-            if (!isset($this->logger)) {
+            if ( ! isset($this->logger)) {
                 $this->logger = new Logger(LOG_DIR, 'worker-jobs');
             }
             return $this->logger;
@@ -49,20 +49,17 @@ class JobsWorker implements Worker
     ) {
     }
 
-    public function setTaskLifecycleHook(TaskLifecycleHookInterface $hook): static
-    {
+    public function setTaskLifecycleHook(TaskLifecycleHookInterface $hook): static {
         $this->taskLifecycleHook = $hook;
         return $this;
     }
 
-    public function setWorkerLifecycleHook(WorkerLifecycleHookInterface $hook): static
-    {
+    public function setWorkerLifecycleHook(WorkerLifecycleHookInterface $hook): static {
         $this->workerLifecycleHook = $hook;
         return $this;
     }
 
-    public function run(): void
-    {
+    public function run(): void {
         $consumer = new Consumer();
 
         try {
@@ -78,8 +75,7 @@ class JobsWorker implements Worker
         }
     }
 
-    public function handleTask(ReceivedTaskInterface $task): void
-    {
+    public function handleTask(ReceivedTaskInterface $task): void {
         $scope = $this->beginLifecycle($task);
 
         // Clear static cache
@@ -89,7 +85,7 @@ class JobsWorker implements Worker
             $name = $task->getName();
 
             $dispatcher = $this->app::getService($name);
-            if (!($dispatcher instanceof TaskDispatcherInterface)) {
+            if ( ! ($dispatcher instanceof TaskDispatcherInterface)) {
                 $task->nack('Cannot find dispatcher for task "' . $name . '"');
                 throw new RuntimeException('Cannot find dispatcher for task "' . $name . '"');
             }
@@ -100,14 +96,14 @@ class JobsWorker implements Worker
 
             $dispatcher->process($task, $payload);
 
-            if (!$task->isCompleted()) {
+            if ( ! $task->isCompleted()) {
                 $task->ack();
             }
         } catch (Throwable $e) {
             $this->recordLifecycleException($scope, $e);
 
             try {
-                if (!$task->isCompleted()) {
+                if ( ! $task->isCompleted()) {
                     $task->nack($e);
                 }
             } catch (Throwable $nackException) {
@@ -132,8 +128,7 @@ class JobsWorker implements Worker
         }
     }
 
-    private function beginLifecycle(ReceivedTaskInterface $task): ?TaskLifecycleScopeInterface
-    {
+    private function beginLifecycle(ReceivedTaskInterface $task): ?TaskLifecycleScopeInterface {
         try {
             return $this->taskLifecycleHook?->begin($task);
         } catch (Throwable) {
@@ -143,7 +138,7 @@ class JobsWorker implements Worker
 
     private function recordLifecycleException(
         ?TaskLifecycleScopeInterface $scope,
-        Throwable $exception
+        Throwable $exception,
     ): void {
         try {
             $scope?->recordException($exception);
@@ -152,8 +147,7 @@ class JobsWorker implements Worker
         }
     }
 
-    private function afterIteration(): void
-    {
+    private function afterIteration(): void {
         try {
             $this->workerLifecycleHook?->afterIteration();
         } catch (Throwable) {
@@ -161,8 +155,7 @@ class JobsWorker implements Worker
         }
     }
 
-    private function workerStopped(): void
-    {
+    private function workerStopped(): void {
         try {
             $this->workerLifecycleHook?->workerStopped();
         } catch (Throwable) {
@@ -170,8 +163,7 @@ class JobsWorker implements Worker
         }
     }
 
-    public function handleError(Throwable $error): void
-    {
+    public function handleError(Throwable $error): void {
         $this->logger->exception($error);
         Helpers::improveException($error);
         Debugger::log($error, ILogger::EXCEPTION);

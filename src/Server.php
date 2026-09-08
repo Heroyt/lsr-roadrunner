@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner;
@@ -9,15 +10,15 @@ use Spiral\RoadRunner\Environment;
 
 class Server
 {
-
     /**
      * @param  array<non-empty-string,Worker>  $workers
      */
     public function __construct(
-      private readonly array $workers = [],
-    ) {}
+        private readonly array $workers = [],
+    ) {
+    }
 
-    public function run() : void {
+    public function run(): void {
         $env = Environment::fromGlobals();
 
         $mode = $env->getMode();
@@ -27,7 +28,7 @@ class Server
         }
 
         throw new RuntimeException(
-          'Cannot find worker for mode "'.$mode.'". Available workers: '.implode(', ', array_keys($this->workers))
+            'Cannot find worker for mode "' . $mode . '". Available workers: ' . implode(', ', array_keys($this->workers)),
         );
     }
 

@@ -18,8 +18,7 @@ use Traversable;
 
 final class TaskProducerLifecycleTest extends TestCase
 {
-    public function testHookCanPropagateHeadersBeforeDispatch(): void
-    {
+    public function test_hook_can_propagate_headers_before_dispatch(): void {
         $events = new TaskProducerEvents();
         $rpc = $this->createMock(RPCInterface::class);
         $rpc->expects(self::once())
@@ -57,8 +56,7 @@ final class TaskProducerLifecycleTest extends TestCase
         self::assertNull($scope->exception);
     }
 
-    public function testDispatchFailureIsRecordedAndPreserved(): void
-    {
+    public function test_dispatch_failure_is_recorded_and_preserved(): void {
         $events = new TaskProducerEvents();
         $rpcFailure = new RuntimeException('RPC failed');
         $rpc = $this->createMock(RPCInterface::class);

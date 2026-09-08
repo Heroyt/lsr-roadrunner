@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace TestCases;
 
 use Lsr\Core\App;
-use Lsr\Core\Translations;
 use Lsr\Core\Http\Lifecycle\RequestLifecycleHookInterface;
 use Lsr\Core\Http\Lifecycle\RequestLifecycleScopeInterface;
+use Lsr\Core\Translations;
 use Lsr\Interfaces\RequestInterface;
 use Lsr\Interfaces\SessionInterface;
 use Lsr\Logging\Logger;
@@ -34,8 +34,7 @@ final class HttpRequestLifecycleState
 
 final class HttpWorkerLifecycleTest extends TestCase
 {
-    public function testCleanupFailureDoesNotSendSecondResponse(): void
-    {
+    public function test_cleanup_failure_does_not_send_second_response(): void {
         $request = $this->createStub(RequestInterface::class);
         $session = $this->createStub(SessionInterface::class);
         $session->method('isInitialized')->willReturn(true);
@@ -63,11 +62,10 @@ final class HttpWorkerLifecycleTest extends TestCase
         $worker->handleRequest($request);
     }
 
-    public function testSequentialRequestsHaveIsolatedLifecycleScopes(): void
-    {
+    public function test_sequential_requests_have_isolated_lifecycle_scopes(): void {
         if (
-            !interface_exists(RequestLifecycleHookInterface::class)
-            || !interface_exists(RequestLifecycleScopeInterface::class)
+            ! interface_exists(RequestLifecycleHookInterface::class)
+            || ! interface_exists(RequestLifecycleScopeInterface::class)
         ) {
             self::markTestSkipped('The compatible lsr/core request lifecycle is not installed.');
         }
@@ -94,32 +92,27 @@ final class HttpWorkerLifecycleTest extends TestCase
         (new ReflectionProperty(HttpWorker::class, 'psr7'))->setValue($worker, $psr7);
 
         $state = new HttpRequestLifecycleState();
-        $hook = new class($state) implements RequestLifecycleHookInterface {
-            public function __construct(private readonly HttpRequestLifecycleState $state)
-            {
+        $hook = new class ($state) implements RequestLifecycleHookInterface {
+            public function __construct(private readonly HttpRequestLifecycleState $state) {
             }
 
-            public function begin(ServerRequestInterface $request): RequestLifecycleScopeInterface
-            {
+            public function begin(ServerRequestInterface $request): RequestLifecycleScopeInterface {
                 if ($this->state->active) {
                     throw new RuntimeException('Previous request lifecycle is still active.');
                 }
                 $this->state->active = true;
                 $this->state->begun++;
 
-                return new class($this->state) implements RequestLifecycleScopeInterface {
+                return new class ($this->state) implements RequestLifecycleScopeInterface {
                     private bool $completed = false;
 
-                    public function __construct(private readonly HttpRequestLifecycleState $state)
-                    {
+                    public function __construct(private readonly HttpRequestLifecycleState $state) {
                     }
 
-                    public function recordException(Throwable $exception): void
-                    {
+                    public function recordException(Throwable $exception): void {
                     }
 
-                    public function complete(?ResponseInterface $response = null): void
-                    {
+                    public function complete(?ResponseInterface $response = null): void {
                         if ($this->completed) {
                             return;
                         }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\ErrorHandlers;
@@ -14,28 +15,28 @@ class Http404ErrorHandler implements HttpErrorHandler
 {
     use BaseHttpErrorHandler;
 
-    public function showError(Request $request, Throwable $error) : ResponseInterface {
+    public function showError(Request $request, Throwable $error): ResponseInterface {
         if (in_array('application/json', $this->getAcceptTypes($request))) {
             return new Response(
-              404,
-              ['Content-Type' => 'application/json'],
-              json_encode(
-                new ErrorResponse(
-                             'Oops, I cannot find this.',
-                             ErrorType::NOT_FOUND,
-                  detail   : $error->getMessage(),
-                  exception: $error
+                404,
+                ['Content-Type' => 'application/json'],
+                json_encode(
+                    new ErrorResponse(
+                        'Oops, I cannot find this.',
+                        ErrorType::NOT_FOUND,
+                        detail   : $error->getMessage(),
+                        exception: $error,
+                    ),
+                    JSON_THROW_ON_ERROR,
                 ),
-                JSON_THROW_ON_ERROR
-              )
             );
         }
 
         if (in_array('text/html', $this->getAcceptTypes($request))) {
             return new Response(
-              404,
-              ['Content-Type' => 'text/plain'],
-              <<<HTML
+                404,
+                ['Content-Type' => 'text/plain'],
+                <<<HTML
                 <!doctype html>
                 <html lang="en">
                 <head>
@@ -53,6 +54,6 @@ class Http404ErrorHandler implements HttpErrorHandler
             );
         }
 
-        return new Response(404, ['Content-Type' => 'text/plain'], 'Oops, I cannot find this. - '.$error->getMessage());
+        return new Response(404, ['Content-Type' => 'text/plain'], 'Oops, I cannot find this. - ' . $error->getMessage());
     }
 }

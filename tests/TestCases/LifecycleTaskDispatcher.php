@@ -10,12 +10,10 @@ use Spiral\RoadRunner\Jobs\Task\ReceivedTaskInterface;
 
 final class LifecycleTaskDispatcher implements TaskDispatcherInterface
 {
-    public static function getDiName(): string
-    {
+    public static function getDiName(): string {
         return 'lifecycle-test';
     }
 
-    public function process(ReceivedTaskInterface $task, ?TaskPayloadInterface $payload = null): void
-    {
+    public function process(ReceivedTaskInterface $task, ?TaskPayloadInterface $payload = null): void {
     }
 }

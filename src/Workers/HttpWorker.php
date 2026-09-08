@@ -21,6 +21,7 @@ use Lsr\Roadrunner\ErrorHandlers\HttpErrorHandler;
 use Lsr\Roadrunner\Lifecycle\WorkerLifecycleHookInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 use Spiral\RoadRunner\Http\PSR7Worker;
 use Spiral\RoadRunner\Worker as RrWorker;
 use Throwable;
@@ -32,7 +33,7 @@ class HttpWorker implements Worker
 {
     public App $app {
         get {
-            if (!isset($this->app)) {
+            if ( ! isset($this->app)) {
                 $this->app = App::getInstance();
             }
             return $this->app;
@@ -42,7 +43,7 @@ class HttpWorker implements Worker
 
     private Logger $logger {
         get {
-            if (!isset($this->logger)) {
+            if ( ! isset($this->logger)) {
                 $this->logger = new Logger(LOG_DIR, 'worker');
             }
             return $this->logger;
@@ -53,15 +54,15 @@ class HttpWorker implements Worker
     private PSR7Worker $psr7;
     private ?RequestLifecycleHookInterface $requestLifecycleHook = null;
     private ?WorkerLifecycleHookInterface $workerLifecycleHook = null;
-    private ?\Psr\Http\Message\ResponseInterface $response = null;
+    private ?ResponseInterface $response = null;
 
     private RequestFactoryInterface $requestFactory {
         get {
-            if (!isset($this->requestFactory)) {
+            if ( ! isset($this->requestFactory)) {
                 $service = $this->app::getServiceByType(RequestFactoryInterface::class);
                 if ($service === null) {
                     throw new LogicException(
-                        'RequestFactory service is not set. Please ensure it is registered in the application.'
+                        'RequestFactory service is not set. Please ensure it is registered in the application.',
                     );
                 }
                 $this->requestFactory = $service;
@@ -83,20 +84,17 @@ class HttpWorker implements Worker
         $this->psr7 = new PSR7Worker($this->worker, $factory, $factory, $factory);
     }
 
-    public function setRequestLifecycleHook(RequestLifecycleHookInterface $hook): static
-    {
+    public function setRequestLifecycleHook(RequestLifecycleHookInterface $hook): static {
         $this->requestLifecycleHook = $hook;
         return $this;
     }
 
-    public function setWorkerLifecycleHook(WorkerLifecycleHookInterface $hook): static
-    {
+    public function setWorkerLifecycleHook(WorkerLifecycleHookInterface $hook): static {
         $this->workerLifecycleHook = $hook;
         return $this;
     }
 
-    public function run(): void
-    {
+    public function run(): void {
         $request = null;
 
         try {
@@ -126,10 +124,10 @@ class HttpWorker implements Worker
                         continue;
                     }
 
-                    if (!($request instanceof RequestInterface)) {
+                    if ( ! ($request instanceof RequestInterface)) {
                         throw new LogicException(
                             'Roadrunner HTTP worker requires a RequestInterface instance from RequestFactory, '
-                            . get_class($request) . ' given.'
+                            . get_class($request) . ' given.',
                         );
                     }
 
@@ -147,8 +145,7 @@ class HttpWorker implements Worker
         }
     }
 
-    public function handleRequest(RequestInterface $request): void
-    {
+    public function handleRequest(RequestInterface $request): void {
         $this->response = null;
         $scope = $this->beginLifecycle($request);
         $failure = null;
@@ -162,20 +159,20 @@ class HttpWorker implements Worker
         $session = $this->app->session;
 
         try {
-            if (!$session->isInitialized()) {
+            if ( ! $session->isInitialized()) {
                 $session->init();
             }
 
             $this->respond(
                 $this->app->run()
                     ->withAddedHeader('Content-Language', $this->app->translations->getLang())
-                    ->withAddedHeader('Set-Cookie', $session->getCookieHeader())
+                    ->withAddedHeader('Set-Cookie', $session->getCookieHeader()),
             );
         } catch (DispatchBreakException $e) {
             // Dispatch break exception is a special case allowing to create a response from anywhere.
             $this->respond(
                 $e->getResponse()
-                    ->withAddedHeader('Set-Cookie', $session->getCookieHeader())
+                    ->withAddedHeader('Set-Cookie', $session->getCookieHeader()),
             );
         } catch (Throwable $e) {
             $this->recordLifecycleException($scope, $e);
@@ -212,8 +209,7 @@ class HttpWorker implements Worker
         }
     }
 
-    private function beginLifecycle(RequestInterface $request): ?RequestLifecycleScopeInterface
-    {
+    private function beginLifecycle(RequestInterface $request): ?RequestLifecycleScopeInterface {
         try {
             return $this->requestLifecycleHook?->begin($request);
         } catch (Throwable) {
@@ -223,7 +219,7 @@ class HttpWorker implements Worker
 
     private function recordLifecycleException(
         ?RequestLifecycleScopeInterface $scope,
-        Throwable $exception
+        Throwable $exception,
     ): void {
         try {
             $scope?->recordException($exception);
@@ -232,8 +228,7 @@ class HttpWorker implements Worker
         }
     }
 
-    private function afterIteration(): void
-    {
+    private function afterIteration(): void {
         try {
             $this->workerLifecycleHook?->afterIteration();
         } catch (Throwable) {
@@ -241,8 +236,7 @@ class HttpWorker implements Worker
         }
     }
 
-    private function workerStopped(): void
-    {
+    private function workerStopped(): void {
         try {
             $this->workerLifecycleHook?->workerStopped();
         } catch (Throwable) {
@@ -250,14 +244,12 @@ class HttpWorker implements Worker
         }
     }
 
-    private function respond(\Psr\Http\Message\ResponseInterface $response): void
-    {
+    private function respond(ResponseInterface $response): void {
         $this->psr7->respond($response);
         $this->response = $response;
     }
 
-    public function handleError(Throwable $error): void
-    {
+    public function handleError(Throwable $error): void {
         $request = $this->app->getRequest();
         assert($request instanceof Request);
 
@@ -276,7 +268,7 @@ class HttpWorker implements Worker
 
         $this->reportError($error);
 
-        if (!$this->app->isProduction()) {
+        if ( ! $this->app->isProduction()) {
             ob_start(); // double buffer prevents sending HTTP headers in some PHP
             ob_start();
             Debugger::getBlueScreen()->render($error);
@@ -290,24 +282,22 @@ class HttpWorker implements Worker
                     [
                         'Content-Type' => 'text/html',
                     ],
-                    $blueScreen
-                )
+                    $blueScreen,
+                ),
             );
             return;
         }
 
         $this->respond($this->error500Handler->showError($request, $error));
     }
-    private function reportError(Throwable $error): void
-    {
+    private function reportError(Throwable $error): void {
         $this->logger->exception($error);
         Helpers::improveException($error);
         Debugger::log($error, ILogger::EXCEPTION);
         file_put_contents('php://stderr', (string) $error);
     }
 
-    private function reportAfterResponseError(Throwable $error): void
-    {
+    private function reportAfterResponseError(Throwable $error): void {
         try {
             $this->reportError($error);
         } catch (Throwable) {

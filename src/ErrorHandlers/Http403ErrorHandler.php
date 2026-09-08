@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\ErrorHandlers;
@@ -14,23 +15,23 @@ class Http403ErrorHandler implements HttpErrorHandler
 {
     use BaseHttpErrorHandler;
 
-    public function showError(Request $request, Throwable $error) : ResponseInterface {
+    public function showError(Request $request, Throwable $error): ResponseInterface {
         if (in_array('application/json', $this->getAcceptTypes($request))) {
             return new Response(
-              403,
-              ['Content-Type' => 'application/json'],
-              json_encode(
-                new ErrorResponse('Access denied', ErrorType::ACCESS, detail: $error->getMessage(), exception: $error),
-                JSON_THROW_ON_ERROR
-              )
+                403,
+                ['Content-Type' => 'application/json'],
+                json_encode(
+                    new ErrorResponse('Access denied', ErrorType::ACCESS, detail: $error->getMessage(), exception: $error),
+                    JSON_THROW_ON_ERROR,
+                ),
             );
         }
 
         if (in_array('text/html', $this->getAcceptTypes($request))) {
             return new Response(
-              403,
-              ['Content-Type' => 'text/plain'],
-              <<<HTML
+                403,
+                ['Content-Type' => 'text/plain'],
+                <<<HTML
                 <!doctype html>
                 <html lang="en">
                 <head>
@@ -48,6 +49,6 @@ class Http403ErrorHandler implements HttpErrorHandler
             );
         }
 
-        return new Response(403, ['Content-Type' => 'text/plain'], 'Access denied - '.$error->getMessage());
+        return new Response(403, ['Content-Type' => 'text/plain'], 'Access denied - ' . $error->getMessage());
     }
 }

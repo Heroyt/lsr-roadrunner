@@ -10,8 +10,7 @@ final class TaskProducerEvents
     public array $events = [];
     public ?string $queue = null;
 
-    public function record(string $event): void
-    {
+    public function record(string $event): void {
         $this->events[] = $event;
     }
 }

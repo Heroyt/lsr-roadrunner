@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\Tasks;
@@ -10,7 +11,7 @@ interface TaskDispatcherInterface
     /**
      * @return non-empty-string
      */
-    public static function getDiName() : string;
+    public static function getDiName(): string;
 
-    public function process(ReceivedTaskInterface $task, ?TaskPayloadInterface $payload = null) : void;
+    public function process(ReceivedTaskInterface $task, ?TaskPayloadInterface $payload = null): void;
 }

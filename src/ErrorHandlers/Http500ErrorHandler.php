@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\ErrorHandlers;
@@ -13,23 +14,23 @@ class Http500ErrorHandler implements HttpErrorHandler
 {
     use BaseHttpErrorHandler;
 
-    public function showError(Request $request, Throwable $error) : ResponseInterface {
+    public function showError(Request $request, Throwable $error): ResponseInterface {
         if (in_array('application/json', $this->getAcceptTypes($request))) {
             return new Response(
-              500,
-              ['Content-Type' => 'application/json'],
-              json_encode(
-                new ErrorResponse('Something Went wrong!', detail: $error->getMessage(), exception: $error),
-                JSON_THROW_ON_ERROR
-              )
+                500,
+                ['Content-Type' => 'application/json'],
+                json_encode(
+                    new ErrorResponse('Something Went wrong!', detail: $error->getMessage(), exception: $error),
+                    JSON_THROW_ON_ERROR,
+                ),
             );
         }
 
         if (in_array('text/html', $this->getAcceptTypes($request))) {
             return new Response(
-              500,
-              ['Content-Type' => 'text/plain'],
-              <<<HTML
+                500,
+                ['Content-Type' => 'text/plain'],
+                <<<HTML
                 <!doctype html>
                 <html lang="en">
                 <head>
@@ -47,6 +48,6 @@ class Http500ErrorHandler implements HttpErrorHandler
             );
         }
 
-        return new Response(500, ['Content-Type' => 'text/plain'], 'Internal server error - '.$error->getMessage());
+        return new Response(500, ['Content-Type' => 'text/plain'], 'Internal server error - ' . $error->getMessage());
     }
 }

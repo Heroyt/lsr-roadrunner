@@ -15,32 +15,27 @@ final class RecordingTaskDispatchScope implements TaskDispatchLifecycleScopeInte
     private ?array $tasks = null;
     public ?Throwable $exception = null;
 
-    public function __construct(private readonly TaskProducerEvents $events)
-    {
+    public function __construct(private readonly TaskProducerEvents $events) {
     }
 
     /** @param non-empty-list<PreparedTaskInterface> $tasks */
-    public function setTasks(array $tasks): void
-    {
+    public function setTasks(array $tasks): void {
         $this->tasks = $tasks;
     }
 
-    public function tasks(): array
-    {
+    public function tasks(): array {
         if ($this->tasks === null) {
             throw new RuntimeException('Tasks were not initialized.');
         }
         return $this->tasks;
     }
 
-    public function recordException(Throwable $exception): void
-    {
+    public function recordException(Throwable $exception): void {
         $this->exception = $exception;
         $this->events->record('hook.exception');
     }
 
-    public function complete(): void
-    {
+    public function complete(): void {
         $this->events->record('hook.complete');
     }
 }

@@ -25,8 +25,7 @@ class TaskProducer
     ) {
     }
 
-    public function setLifecycleHook(TaskDispatchLifecycleHookInterface $hook): static
-    {
+    public function setLifecycleHook(TaskDispatchLifecycleHookInterface $hook): static {
         $this->lifecycleHook = $hook;
         return $this;
     }
@@ -38,8 +37,7 @@ class TaskProducer
      * @return void
      * @throws JobsException
      */
-    public function push(string $dispatcher, ?TaskPayloadInterface $payload, ?OptionsInterface $options = null): void
-    {
+    public function push(string $dispatcher, ?TaskPayloadInterface $payload, ?OptionsInterface $options = null): void {
         $task = $this->queue->create(
             $dispatcher::getDiName(),
             $payload !== null ? ($this->serializer->serialize($payload) ?? '') : '',
@@ -68,7 +66,7 @@ class TaskProducer
     public function plan(
         string $dispatcher,
         ?TaskPayloadInterface $payload,
-        ?OptionsInterface $options = null
+        ?OptionsInterface $options = null,
     ): PreparedTaskInterface {
         $task = $this->queue->create(
             $dispatcher::getDiName(),
@@ -83,8 +81,7 @@ class TaskProducer
      * @return void
      * @throws JobsException
      */
-    public function dispatch(): void
-    {
+    public function dispatch(): void {
         if ($this->planned === []) {
             $this->queue->dispatchMany();
             return;
@@ -107,8 +104,7 @@ class TaskProducer
     /**
      * @param non-empty-list<PreparedTaskInterface> $tasks
      */
-    private function beginLifecycle(array $tasks): ?TaskDispatchLifecycleScopeInterface
-    {
+    private function beginLifecycle(array $tasks): ?TaskDispatchLifecycleScopeInterface {
         try {
             return $this->lifecycleHook?->begin($this->queue->getName(), $tasks);
         } catch (Throwable) {
@@ -118,7 +114,7 @@ class TaskProducer
 
     private function recordLifecycleException(
         ?TaskDispatchLifecycleScopeInterface $scope,
-        Throwable $exception
+        Throwable $exception,
     ): void {
         try {
             $scope?->recordException($exception);
@@ -127,8 +123,7 @@ class TaskProducer
         }
     }
 
-    private function completeLifecycle(?TaskDispatchLifecycleScopeInterface $scope): void
-    {
+    private function completeLifecycle(?TaskDispatchLifecycleScopeInterface $scope): void {
         try {
             $scope?->complete();
         } catch (Throwable) {

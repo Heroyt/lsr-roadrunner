@@ -15,8 +15,7 @@ final readonly class RecordingTaskDispatchHook implements TaskDispatchLifecycleH
     ) {
     }
 
-    public function begin(string $queue, array $tasks): TaskDispatchLifecycleScopeInterface
-    {
+    public function begin(string $queue, array $tasks): TaskDispatchLifecycleScopeInterface {
         $this->events->queue = $queue;
         $this->events->record('hook.begin');
         $this->scope->setTasks([

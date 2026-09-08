@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Lsr\Roadrunner\DI;
@@ -33,133 +34,132 @@ use stdClass;
  */
 class RoadrunnerExtension extends CompilerExtension
 {
-
-    public function getConfigSchema() : Nette\Schema\Schema {
+    public function getConfigSchema(): Nette\Schema\Schema {
         return Expect::structure(
-          [
-            'workers' => Expect::arrayOf(
-              Expect::anyOf(Expect::type(Worker::class), Expect::string()),
-              Expect::string(),
-            )->default(
-              [
-                Environment\Mode::MODE_HTTP => '@'.$this->prefix('worker.http'),
-                Environment\Mode::MODE_JOBS => '@'.$this->prefix('worker.jobs'),
-              ]
-            ),
-            'rpc'     => Expect::structure(
-              [
-                'host' => Expect::string('tcp://localhost'),
-                'port' => Expect::int(6001),
-              ]
-            ),
-            'jobs'    => Expect::structure(
-              [
-                'queue'      => Expect::string('tasks'),
-                'serializer' => Expect::type(TaskSerializerInterface::class.'|string')->default(
-                  '@'.$this->prefix('tasks.serializer')
+            [
+                'workers' => Expect::arrayOf(
+                    Expect::anyOf(Expect::type(Worker::class), Expect::string()),
+                    Expect::string(),
+                )->default(
+                    [
+                        Environment\Mode::MODE_HTTP => '@' . $this->prefix('worker.http'),
+                        Environment\Mode::MODE_JOBS => '@' . $this->prefix('worker.jobs'),
+                    ],
                 ),
-              ]
-            ),
-          ]
+                'rpc'     => Expect::structure(
+                    [
+                        'host' => Expect::string('tcp://localhost'),
+                        'port' => Expect::int(6001),
+                    ],
+                ),
+                'jobs'    => Expect::structure(
+                    [
+                        'queue'      => Expect::string('tasks'),
+                        'serializer' => Expect::type(TaskSerializerInterface::class . '|string')->default(
+                            '@' . $this->prefix('tasks.serializer'),
+                        ),
+                    ],
+                ),
+            ],
         );
     }
 
-    public function loadConfiguration() : void {
+    public function loadConfiguration(): void {
         $builder = $this->getContainerBuilder();
 
         // Http error handlers
         $builder->addDefinition($this->prefix('httpErrorHandler.500'))
-                ->setType(Http500ErrorHandler::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
+            ->setType(Http500ErrorHandler::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.404'))
-                ->setType(Http404ErrorHandler::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
+            ->setType(Http404ErrorHandler::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.405'))
-                ->setType(Http405ErrorHandler::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
+            ->setType(Http405ErrorHandler::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('httpErrorHandler.403'))
-                ->setType(Http403ErrorHandler::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
+            ->setType(Http403ErrorHandler::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
 
         // Workers
         $builder->addDefinition($this->prefix('worker.http'))
-                ->setType(HttpWorker::class)
-                ->setFactory(
-                  HttpWorker::class,
-                  [
-                    '@'.$this->prefix('httpErrorHandler.500'),
-                    '@'.$this->prefix('httpErrorHandler.403'),
-                    '@'.$this->prefix('httpErrorHandler.404'),
-                    '@'.$this->prefix('httpErrorHandler.405'),
-                  ]
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
+            ->setType(HttpWorker::class)
+            ->setFactory(
+                HttpWorker::class,
+                [
+                    '@' . $this->prefix('httpErrorHandler.500'),
+                    '@' . $this->prefix('httpErrorHandler.403'),
+                    '@' . $this->prefix('httpErrorHandler.404'),
+                    '@' . $this->prefix('httpErrorHandler.405'),
+                ],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'http' => true]);
         $builder->addDefinition($this->prefix('worker.jobs'))
-                ->setType(JobsWorker::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+            ->setType(JobsWorker::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
 
 
         // Main server
         $builder->addDefinition($this->prefix('server'))
-                ->setType(Server::class)
-                ->setFactory(
-                  Server::class,
-                  [
+            ->setType(Server::class)
+            ->setFactory(
+                Server::class,
+                [
                     $this->config->workers,
-                  ]
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true]);
+                ],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true]);
 
         // RPC
-        $rpcConnection = $this->config->rpc->host.':'.$this->config->rpc->port;
+        $rpcConnection = $this->config->rpc->host . ':' . $this->config->rpc->port;
         $builder->addDefinition($this->prefix('rpc'))
-                ->setType(RPC::class)
-                ->setFactory(
-                  [RPC::class, 'create'],
-                  [$rpcConnection],
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'rpc' => true]);
+            ->setType(RPC::class)
+            ->setFactory(
+                [RPC::class, 'create'],
+                [$rpcConnection],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'rpc' => true]);
         $builder->addDefinition($this->prefix('asyncRpc'))
-                ->setType(MultiRPC::class)
-                ->setFactory(
-                  [MultiRPC::class, 'create'],
-                  [$rpcConnection],
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true]);
+            ->setType(MultiRPC::class)
+            ->setFactory(
+                [MultiRPC::class, 'create'],
+                [$rpcConnection],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true]);
 
         // Jobs
         $builder->addDefinition($this->prefix('jobs'))
-                ->setType(Jobs::class)
-                ->setFactory(
-                  Jobs::class,
-                  [
-                    '@'.$this->prefix('rpc'),
-                  ]
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+            ->setType(Jobs::class)
+            ->setFactory(
+                Jobs::class,
+                [
+                    '@' . $this->prefix('rpc'),
+                ],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('queue'))
-                ->setType(Queue::class)
-                ->setFactory(
-                  ['@'.$this->prefix('jobs'), 'connect'],
-                  [
+            ->setType(Queue::class)
+            ->setFactory(
+                ['@' . $this->prefix('jobs'), 'connect'],
+                [
                     $this->config->jobs->queue,
-                  ]
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+                ],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('tasks.serializer'))
-                ->setType(TaskSerializerInterface::class)
-                ->setFactory(PhpTaskSerializer::class)
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+            ->setType(TaskSerializerInterface::class)
+            ->setFactory(PhpTaskSerializer::class)
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
         $builder->addDefinition($this->prefix('tasks.producer'))
-                ->setType(TaskProducer::class)
-                ->setFactory(
-                  TaskProducer::class,
-                  [
-                    '@'.$this->prefix('queue'),
+            ->setType(TaskProducer::class)
+            ->setFactory(
+                TaskProducer::class,
+                [
+                    '@' . $this->prefix('queue'),
                     $this->config->jobs->serializer,
-                  ]
-                )
-                ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+                ],
+            )
+            ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
     }
 
 }
