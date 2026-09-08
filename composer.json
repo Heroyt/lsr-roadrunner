@@ -57,7 +57,7 @@
     "lsr/request": "^0.3",
     "lsr/db": "^0.3",
     "lsr/serializer": "^0.3",
-    "lsr/cache": "^0.3",
+    "lsr/caching": "^0.3",
     "lsr/orm": "^0.3",
     "vlucas/phpdotenv": "^5.6",
     "nette/php-generator": "^4.1",
