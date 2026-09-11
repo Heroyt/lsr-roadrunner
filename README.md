@@ -43,7 +43,7 @@ The [HTTP worker](src/Workers/HttpWorker.php) converts incoming PSR requests usi
 
 ## Logging
 
-**Unreleased:** logger setters and the configuration below are working-tree changes, not features of an existing published version. Check installed source before using them.
+**Available since `lsr/roadrunner 0.1.16`.** Check the installed version before using logger setters and the configuration below.
 
 Both built-in workers accept any `Psr\Log\LoggerInterface` through `setLogger(LoggerInterface $logger): static`. Existing constructors are unchanged, including subclasses with their own constructor dependencies:
 
