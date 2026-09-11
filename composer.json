@@ -2,7 +2,7 @@
   "name": "lsr/roadrunner",
   "license": "MIT",
   "description": "Laser framework roadrunner connection.",
-  "version": "0.1.16",
+  "version": "0.1.17-dev",
   "repositories": [
     {
       "type": "composer",
