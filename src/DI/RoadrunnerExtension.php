@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lsr\Roadrunner\DI;
 
+use Lsr\Logging\Logger;
 use Lsr\Roadrunner\ErrorHandlers\Http403ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http404ErrorHandler;
 use Lsr\Roadrunner\ErrorHandlers\Http405ErrorHandler;
@@ -17,7 +18,11 @@ use Lsr\Roadrunner\Workers\JobsWorker;
 use Lsr\Roadrunner\Workers\Worker;
 use Nette;
 use Nette\DI\CompilerExtension;
+use Nette\DI\Definitions\Reference;
+use Nette\DI\Definitions\ServiceDefinition;
+use Nette\PhpGenerator\Literal;
 use Nette\Schema\Expect;
+use Psr\Log\LoggerInterface;
 use Spiral\Goridge\RPC\MultiRPC;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\Environment;
@@ -28,6 +33,8 @@ use stdClass;
 /**
  * @property-read object{
  *     workers: array<string,Worker|string>,
+ *     logger: string|null,
+ *     loggers: object{http: string|null, jobs: string|null},
  *     rpc: object{host: string, port: int},
  *     jobs: object{queue: string, serializer: TaskSerializerInterface|string}
  *  }&stdClass $config
@@ -37,6 +44,13 @@ class RoadrunnerExtension extends CompilerExtension
     public function getConfigSchema(): Nette\Schema\Schema {
         return Expect::structure(
             [
+                'logger'  => Expect::string()->pattern('@.+')->nullable(),
+                'loggers' => Expect::structure(
+                    [
+                        'http' => Expect::string()->pattern('@.+')->nullable(),
+                        'jobs' => Expect::string()->pattern('@.+')->nullable(),
+                    ],
+                ),
                 'workers' => Expect::arrayOf(
                     Expect::anyOf(Expect::type(Worker::class), Expect::string()),
                     Expect::string(),
@@ -66,6 +80,19 @@ class RoadrunnerExtension extends CompilerExtension
 
     public function loadConfiguration(): void {
         $builder = $this->getContainerBuilder();
+
+        foreach (['http' => 'worker', 'jobs' => 'worker-jobs'] as $purpose => $fileName) {
+            $logger = $builder->addDefinition($this->prefix('logger.' . $purpose))
+                ->setAutowired(false);
+            $reference = $this->config->loggers->$purpose ?? $this->config->logger;
+            if ($reference !== null) {
+                $logger->setType(LoggerInterface::class)
+                    ->setFactory(new Reference(substr($reference, 1)));
+            } else {
+                $logger->setFactory(Logger::class, [new Literal('\LOG_DIR'), $fileName]);
+                $logger->lazy = true;
+            }
+        }
 
         // Http error handlers
         $builder->addDefinition($this->prefix('httpErrorHandler.500'))
@@ -160,6 +187,28 @@ class RoadrunnerExtension extends CompilerExtension
                 ],
             )
             ->setTags(['lsr' => true, 'roadrunner' => true, 'jobs' => true]);
+    }
+
+    public function beforeCompile(): void {
+        $builder = $this->getContainerBuilder();
+        foreach (['http' => HttpWorker::class, 'jobs' => JobsWorker::class] as $purpose => $type) {
+            $names = [$this->prefix('worker.' . $purpose)];
+            $configuredWorker = $this->config->workers[$purpose] ?? null;
+            if (is_string($configuredWorker) && str_starts_with($configuredWorker, '@')) {
+                $names[] = substr($configuredWorker, 1);
+            }
+
+            foreach (array_unique($names) as $name) {
+                $worker = $builder->getDefinition($name);
+                if (
+                    $worker instanceof ServiceDefinition
+                    && is_a($worker->getType() ?? '', $type, true)
+                ) {
+                    // Inject after application replacements without changing their constructors.
+                    $worker->addSetup('setLogger', [new Reference($this->prefix('logger.' . $purpose))]);
+                }
+            }
+        }
     }
 
 }

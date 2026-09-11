@@ -10,7 +10,6 @@ use Lsr\Core\Http\Lifecycle\RequestLifecycleScopeInterface;
 use Lsr\Core\Translations;
 use Lsr\Interfaces\RequestInterface;
 use Lsr\Interfaces\SessionInterface;
-use Lsr\Logging\Logger;
 use Lsr\Roadrunner\Workers\HttpWorker;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\TestCase;
@@ -53,11 +52,12 @@ final class HttpWorkerLifecycleTest extends TestCase
         $psr7 = $this->createMock(PSR7Worker::class);
         $psr7->expects(self::once())->method('respond');
 
-        $logger = $this->createStub(Logger::class);
+        $logger = new RecordingLogger();
+        $logger->failure = new RuntimeException('Log storage failed');
         $worker = (new ReflectionClass(HttpWorker::class))->newInstanceWithoutConstructor();
         $worker->app = $app;
         (new ReflectionProperty(HttpWorker::class, 'psr7'))->setValue($worker, $psr7);
-        (new ReflectionProperty(HttpWorker::class, 'logger'))->setValue($worker, $logger);
+        $worker->setLogger($logger);
 
         $worker->handleRequest($request);
     }

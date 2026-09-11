@@ -12,6 +12,7 @@ use Lsr\Roadrunner\Lifecycle\TaskLifecycleScopeInterface;
 use Lsr\Roadrunner\Lifecycle\WorkerLifecycleHookInterface;
 use Lsr\Roadrunner\Tasks\Serializers\TaskSerializerInterface;
 use Lsr\Roadrunner\Tasks\TaskDispatcherInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Spiral\RoadRunner\Jobs\Consumer;
 use Spiral\RoadRunner\Jobs\Task\ReceivedTaskInterface;
@@ -32,14 +33,14 @@ class JobsWorker implements Worker
         set(App $value) => $this->app = $value;
     }
 
-    private Logger $logger {
+    private LoggerInterface $logger {
         get {
             if ( ! isset($this->logger)) {
                 $this->logger = new Logger(LOG_DIR, 'worker-jobs');
             }
             return $this->logger;
         }
-        set(Logger $value) => $this->logger = $value;
+        set(LoggerInterface $value) => $this->logger = $value;
     }
     private ?TaskLifecycleHookInterface $taskLifecycleHook = null;
     private ?WorkerLifecycleHookInterface $workerLifecycleHook = null;
@@ -47,6 +48,11 @@ class JobsWorker implements Worker
     public function __construct(
         protected readonly TaskSerializerInterface $serializer,
     ) {
+    }
+
+    public function setLogger(LoggerInterface $logger): static {
+        $this->logger = $logger;
+        return $this;
     }
 
     public function setTaskLifecycleHook(TaskLifecycleHookInterface $hook): static {
@@ -164,7 +170,8 @@ class JobsWorker implements Worker
     }
 
     public function handleError(Throwable $error): void {
-        $this->logger->exception($error);
+        $this->logger->error('Thrown Exception (' . $error->getCode() . '): ' . $error->getMessage());
+        $this->logger->debug($error->getTraceAsString());
         Helpers::improveException($error);
         Debugger::log($error, ILogger::EXCEPTION);
     }

@@ -22,6 +22,7 @@ use Lsr\Roadrunner\Lifecycle\WorkerLifecycleHookInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 use Spiral\RoadRunner\Http\PSR7Worker;
 use Spiral\RoadRunner\Worker as RrWorker;
 use Throwable;
@@ -41,14 +42,14 @@ class HttpWorker implements Worker
         set(App $value) => $this->app = $value;
     }
 
-    private Logger $logger {
+    private LoggerInterface $logger {
         get {
             if ( ! isset($this->logger)) {
                 $this->logger = new Logger(LOG_DIR, 'worker');
             }
             return $this->logger;
         }
-        set(Logger $value) => $this->logger = $value;
+        set(LoggerInterface $value) => $this->logger = $value;
     }
     private RrWorker $worker;
     private PSR7Worker $psr7;
@@ -82,6 +83,11 @@ class HttpWorker implements Worker
 
         $factory = new Psr17Factory();
         $this->psr7 = new PSR7Worker($this->worker, $factory, $factory, $factory);
+    }
+
+    public function setLogger(LoggerInterface $logger): static {
+        $this->logger = $logger;
+        return $this;
     }
 
     public function setRequestLifecycleHook(RequestLifecycleHookInterface $hook): static {
@@ -291,7 +297,8 @@ class HttpWorker implements Worker
         $this->respond($this->error500Handler->showError($request, $error));
     }
     private function reportError(Throwable $error): void {
-        $this->logger->exception($error);
+        $this->logger->error('Thrown Exception (' . $error->getCode() . '): ' . $error->getMessage());
+        $this->logger->debug($error->getTraceAsString());
         Helpers::improveException($error);
         Debugger::log($error, ILogger::EXCEPTION);
         file_put_contents('php://stderr', (string) $error);
