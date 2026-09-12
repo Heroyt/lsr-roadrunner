@@ -2,7 +2,7 @@
   "name": "lsr/roadrunner",
   "license": "MIT",
   "description": "Laser framework roadrunner connection.",
-  "version": "0.1.17-dev",
+  "version": "0.1.17",
   "repositories": [
     {
       "type": "composer",
@@ -38,7 +38,7 @@
   },
   "authors": [
     {
-      "name": "Tomáš Vojík",
+      "name": "Tom\u00e1\u0161 Voj\u00edk",
       "email": "vojik@wboy.cz"
     }
   ],
