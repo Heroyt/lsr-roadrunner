@@ -7,7 +7,8 @@
 - PHP `>=8.4` with `fileinfo`, `gettext`, `simplexml`, `ctype`, `mbstring` and `pdo_sqlite`.
 - LSR Core `^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7`, Routing `^0.3 || ^0.4 || ^0.5`, Interfaces `^0.3.5`, ORM `^0.3 || ^0.4`, and the Logging, Request, DB, Serializer and Cache `^0.3` packages. Core 0.7 admission is new in **0.1.18**; Core 0.6 / ORM 0.4 admission arrived in 0.1.17.
 - Nette DI `^3.2.4` (native lazy logger services), Latte `^3.0`, Nette PHP Generator `^4.1` and phpdotenv `^5.6`.
-- RoadRunner `^2025`, worker `^3.6`, HTTP `^4.1` and jobs `^4.6` PHP packages.
+- RoadRunner worker `^3.6`, HTTP `^4.1` and jobs `^4.6` PHP packages. Since **0.1.19** this package no longer requires a server version marker (`spiral/roadrunner` or `roadrunner/roadrunner`); the installed RoadRunner libraries declare it. The ranges accept both the `spiral/*` packages and their renamed `roadrunner/*` successors, which replace the old names and keep the `Spiral\RoadRunner` namespaces. An application selects its server line through its own constraints, for example `spiral/roadrunner:^2025.1` or `roadrunner/roadrunner:^3.0`.
+- The RoadRunner v3 PHP libraries currently cannot be installed together: `roadrunner/http` 4.2+ needs `roadrunner/api-dto` 2.x, while the only tagged v3 jobs release (4.9.0) still requires `spiral/roadrunner ^3.0`, which Composer blocks through a security advisory. Until a fixed jobs release exists, Composer keeps the 2025-era HTTP and jobs libraries. HTTP and in-memory jobs were verified against RoadRunner 2025.1.15 and 3.0.0 servers with both library generations.
 - A PSR-3 logger contract from `psr/log` `^1.0 || ^2.0 || ^3.0`; the default implementation remains `lsr/logging`.
 - A running RoadRunner server with the appropriate plugins, RPC endpoint and job pipeline configured outside this library. The application must bootstrap LSR Core, including its services, runtime paths, session and translations.
 
