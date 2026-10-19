@@ -5,7 +5,7 @@
 ## Requirements
 
 - PHP `>=8.4` with `fileinfo`, `gettext`, `simplexml`, `ctype`, `mbstring` and `pdo_sqlite`.
-- LSR Core `^0.3 || ^0.4 || ^0.5 || ^0.6`, Routing `^0.3 || ^0.4 || ^0.5`, Interfaces `^0.3.5`, ORM `^0.3 || ^0.4`, and the Logging, Request, DB, Serializer and Cache `^0.3` packages. Core 0.6 / ORM 0.4 admission is new in **0.1.17 (unreleased)**; 0.1.16 remains the published logger-injection patch.
+- LSR Core `^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7`, Routing `^0.3 || ^0.4 || ^0.5`, Interfaces `^0.3.5`, ORM `^0.3 || ^0.4`, and the Logging, Request, DB, Serializer and Cache `^0.3` packages. Core 0.7 admission is new in **0.1.18**; Core 0.6 / ORM 0.4 admission arrived in 0.1.17.
 - Nette DI `^3.2.4` (native lazy logger services), Latte `^3.0`, Nette PHP Generator `^4.1` and phpdotenv `^5.6`.
 - RoadRunner `^2025`, worker `^3.6`, HTTP `^4.1` and jobs `^4.6` PHP packages.
 - A PSR-3 logger contract from `psr/log` `^1.0 || ^2.0 || ^3.0`; the default implementation remains `lsr/logging`.
